@@ -55,6 +55,7 @@ coverage.xml
 .hypothesis/
 .pytest_cache/
 *.mp4
+test.py
 
 # Performance profiling
 prof/

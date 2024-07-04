@@ -81,7 +81,6 @@ def seq_stream(
     url,
     timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
     max_retries=0,
-    chunk_size: int | None = None,
 ):
     """Read the response in sequence.
     :param str url: The URL to perform the GET request for.
@@ -99,9 +98,7 @@ def seq_stream(
     url = base_url + parse.urlencode(querys)
 
     segment_data = b""
-    for chunk in stream(
-        url, timeout=timeout, max_retries=max_retries, chunk_size=chunk_size
-    ):
+    for chunk in stream(url, timeout=timeout, max_retries=max_retries):
         yield chunk
         segment_data += chunk
 
@@ -129,15 +126,11 @@ def stream(
     url,
     timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
     max_retries=0,
-    chunk_size: int | None = None,
 ):
     """Read the response in chunks.
     :param str url: The URL to perform the GET request for.
     :rtype: Iterable[bytes]
     """
-    global default_range_size
-    default_range_size = chunk_size or default_range_size
-
     file_size: int = default_range_size  # fake filesize to start
     downloaded = 0
     while downloaded < file_size:
