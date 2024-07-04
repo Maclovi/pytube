@@ -9,7 +9,7 @@ from urllib import parse
 from urllib.error import URLError
 from urllib.request import Request, urlopen
 
-from pytube.exceptions import RegexMatchError, MaxRetriesExceeded
+from pytube.exceptions import MaxRetriesExceeded, RegexMatchError
 from pytube.helpers import regex_search
 
 logger = logging.getLogger(__name__)
@@ -88,7 +88,8 @@ def post(url, extra_headers=None, data=None, timeout=socket._GLOBAL_DEFAULT_TIME
 def seq_stream(
     url,
     timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
-    max_retries=0
+    max_retries=0,
+    chunk_size: int | None = None
 ):
     """Read the response in sequence.
     :param str url: The URL to perform the GET request for.
@@ -106,7 +107,7 @@ def seq_stream(
     url = base_url + parse.urlencode(querys)
 
     segment_data = b''
-    for chunk in stream(url, timeout=timeout, max_retries=max_retries):
+    for chunk in stream(url, timeout=timeout, max_retries=max_retries, chunk_size):
         yield chunk
         segment_data += chunk
 
@@ -133,12 +134,16 @@ def seq_stream(
 def stream(
     url,
     timeout=socket._GLOBAL_DEFAULT_TIMEOUT,
-    max_retries=0
+    max_retries=0,
+    chunk_size: int | None = None
 ):
     """Read the response in chunks.
     :param str url: The URL to perform the GET request for.
     :rtype: Iterable[bytes]
     """
+    global default_range_size
+    default_range_size = chunk_size or default_range_size
+
     file_size: int = default_range_size  # fake filesize to start
     downloaded = 0
     while downloaded < file_size:
