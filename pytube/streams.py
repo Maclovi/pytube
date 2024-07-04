@@ -408,18 +408,18 @@ class Stream:
             self._monostate.on_progress(self, chunk, bytes_remaining)
         return chunk
 
-    def get_chunks(self) -> Iterable[bytes]:
+    def get_chunks(self, chunk_size: int | None = None) -> Iterable[bytes]:
         bytes_remaining = self.filesize
         logger.info(
             "downloading (%s total bytes) file to buffer",
             self.filesize,
         )
         try:
-            stream = request.stream(self.url)
+            stream = request.stream(self.url, chunk_size)
         except HTTPError as e:
             if e.code != 404:
                 raise
-            stream = request.seq_stream(self.url)
+            stream = request.seq_stream(self.url, chunk_size)
 
         for chunk in stream:
             yield self.on_progress2(chunk, bytes_remaining)
