@@ -426,6 +426,7 @@ class Stream:
             stream = request.seq_stream(self.url)
 
         for chunk in stream:
+            bytes_remaining -= len(chunk)
             yield self.on_progress2(chunk, bytes_remaining)
 
         self.on_complete(None)
