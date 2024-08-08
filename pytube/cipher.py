@@ -264,8 +264,9 @@ def get_throttling_function_name(js: str) -> str:
         # Regex logic changed based on old players, n_func can easily be found after ".length ||",
         # in this case n_func is "rma"
         # Before this regex, we got the function inside the idx 0 of "oDa"
-        r"[abc]=(?P<func>[a-zA-Z0-9$]+)\[(?P<idx>\d+)\]\([abc]\),a\.set\([a-zA-Z0-9$\",]+\),"
-        r"[a-zA-Z0-9$]+\.length\|\|(?P<n_func>[a-zA-Z0-9$]+)\(\"\"\)"
+        r'a\.[a-zA-Z]\s*&&\s*\([a-z]\s*=\s*a\.get\("n"\)\)\s*&&.*?\|\|\s*([a-z]+)',
+        r"\([a-z]\s*=\s*([a-zA-Z0-9$]+)(\[\d+\])?\([a-z]\)",
+        r"\([a-z]\s*=\s*([a-zA-Z0-9$]+)(\[\d+\])\([a-z]\)",
     ]
     logger.debug("Finding throttling function name")
     for pattern in function_patterns:
