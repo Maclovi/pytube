@@ -280,7 +280,7 @@ def get_throttling_function_name(js: str) -> str:
 
             logger.debug("Checking throttling function name")
             if idx:
-                n_func_check_pattern = rf"var {re.escape(func)}\s*=\s*\[(.+?)];"
+                n_func_check_pattern = rf"var {re.escape(func)}\s*=\s*\[(.+?)]"
                 n_func_found = re.search(n_func_check_pattern, js)
 
                 if n_func_found:
