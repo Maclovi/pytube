@@ -252,11 +252,18 @@ def get_throttling_function_name(js: str) -> str:
 
     :param str js:
         The contents of the base.js asset file.
+    :param str js_url:
+        Full base.js url
     :rtype: str
     :returns:
         The name of the function used to compute the throttling parameter.
     """
     function_patterns = [
+        # New pattern used in player "20dfca59" on July 29, 2024
+        # a.D && (PL(a), b = a.j.n || null) && (b = oDa[0](b), a.set("n", b), oDa.length || rma(""))
+        # Regex logic changed based on old players, n_func can easily be found after ".length ||",
+        # in this case n_func is "rma"
+        # Before this regex, we got the function inside the idx 0 of "oDa"
         r"[abc]=(?P<func>[a-zA-Z0-9$]+)\[(?P<idx>\d+)\]\([abc]\),a\.set\([a-zA-Z0-9$\",]+\),"
         r"[a-zA-Z0-9$]+\.length\|\|(?P<n_func>[a-zA-Z0-9$]+)\(\"\"\)"
     ]
@@ -266,23 +273,31 @@ def get_throttling_function_name(js: str) -> str:
         function_match = regex.search(js)
         if function_match:
             logger.debug("finished regex search, matched: %s", pattern)
-            if len(function_match.groups()) == 1:
-                return function_match.group(1)
-            idx = function_match.group(2)
-            if idx:
-                idx = idx.strip("[]")
-                array = re.search(
-                    r"var {nfunc}\s*=\s*(\[.+?\])".format(
-                        nfunc=re.escape(function_match.group(1))
-                    ),
-                    js,
-                )
-                if array:
-                    array = array.group(1).strip("[]").split(",")
-                    array = [x.strip() for x in array]
-                    return array[int(idx)]
 
-    raise RegexMatchError(caller="get_throttling_function_name", pattern="multiple")
+            func = function_match.group("func")
+            idx = function_match.group("idx")
+            n_func = function_match.group("n_func")
+
+            logger.debug("Checking throttling function name")
+            if idx:
+                n_func_check_pattern = rf"var {re.escape(func)}\s*=\s*\[(.+?)];"
+                n_func_found = re.search(n_func_check_pattern, js)
+
+                if n_func_found:
+                    if n_func_found.group(1) == n_func:
+                        return n_func
+
+                    raise RegexMatchError(
+                        caller="get_throttling_function_name",
+                        pattern=f"{n_func}, does not match the one found in ",
+                    )
+
+                raise RegexMatchError(
+                    caller="get_throttling_function_name",
+                    pattern=f"{n_func_check_pattern} in ",
+                )
+
+    raise RegexMatchError(caller="get_throttling_function_name", pattern="multiple in ")
 
 
 def get_throttling_function_code(js: str) -> str:
